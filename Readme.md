@@ -36,7 +36,7 @@ Cloud Storage: Amazon S3 or Google Cloud Storage
 
 Installation
 
-# Clone the repository: git clone https://github.com/your-username/video-streaming-app.git
+# Clone the repository: git clone  https://github.com/Nitin034/video-streaming-application.git
 
 Install dependencies: npm install
 
