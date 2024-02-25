@@ -98,6 +98,91 @@ const postAvideo = asyncHandler(async(req, res)=>{
 
 });
 
- 
+const getVideoById = asyncHandler(async(req, res)=>{
+    const {videoId} = req.params
+    const videoUrl = await Video.findById(videoId)
+    if(!videoUrl){
+        throw new ApiError(404 , "Video not found")
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200 , {videoUrl}, "Success"))
+})
 
-export {postAvideo , getAllVideos}
+const updateVideo = asyncHandler(async(req, res)=>{
+    const{ videoId} = req.params
+    const{title, description} = req.body
+    const localPathofthumbnail = req.file.path;
+
+    if(!localPathofthumbnail){
+        throw new ApiError(401, "File not found")
+    }
+
+    const uploadincloud = await uploadOnCloudinary(localPathofthumbnail)
+
+    if(!uploadincloud.url){
+        throw new ApiError(500, "Unable to upload Updated Thumbnail")
+    }
+
+    const public_id_video = await Video.findById(videoId)
+    const deletefilefromcloud = await deleteFile(public_id_video.cloudinaryThumbnailId);
+
+    const uploadnewFiles = await Video.findByIdAndUpdate(
+        videoId,{
+            $set:{
+                thumbnail: uploadincloud.url,
+                cloudinaryThumbnailId: uploadincloud.public_id,
+                title: title,
+                description: description
+            },},
+            {
+                new: true
+            }
+        
+    )
+    if(!uploadnewFiles){
+        throw new ApiError(400 , "Something went worng new Data Not upload")
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200 , {uploadnewFiles} , "Success"))
+})
+
+const deleteVideo = asyncHandler(async(req, res)=>{
+    const{ videoId} = req.params
+    const public_id_video = await Video.findById(
+        new mongoose.Types.ObjectId(videoId));
+        if(!public_id_video){
+            throw new ApiError("404" , "Video notfound")
+        }
+
+        const cloudinaryVideoId = public_id_video.get("cloudinaryVideoId");
+        const deletefileincloud = await deleteFile(cloudinaryVideoId)
+
+        if(!deletefileincloud.result || deletefileincloud.result !== "ok")
+        throw new ApiError(500 , "Unable to delete file on cloudinary")
+
+        const deleteVideoinServer = await Video.findByIdAndDelete(videoId)
+        if(!deleteVideoinServer){
+            throw new ApiError (500 , "Unable to delete Video on server")
+        }
+        return res
+        .status(200)
+        .json(200 ,{deleteVideoinServer}, "Success")
+   
+})
+
+const togglePostStatus = asyncHandler(async(req, res)=> {
+    const {videoId} = req.params
+    const videoStatus = await Video.findByIdAndUpdate({_id: videoId}, [
+        {
+            $set : {isPublished: {$not : "$isPublished"}}
+        }
+
+    ])
+    return res 
+    .status(200)
+    .json( new ApiResponse(200, {videoStatus}, "Suceess"))
+})
+
+export {postAvideo , getAllVideos , updateVideo, deleteVideo, getVideoById}
