@@ -174,15 +174,15 @@ const deleteVideo = asyncHandler(async(req, res)=>{
 
 const togglePostStatus = asyncHandler(async(req, res)=> {
     const {videoId} = req.params
-    const videoStatus = await Video.findByIdAndUpdate({_id: videoId}, [
+    const videoStatus = await Video.findOneAndUpdate({_id: videoId}, [
         {
-            $set : {isPublished: {$not : "$isPublished"}}
+            $set : {isPublished: { $not : "$isPublished"}}
         }
 
     ])
     return res 
     .status(200)
-    .json( new ApiResponse(200, {videoStatus}, "Suceess"))
+    .json( new ApiResponse(200, {videoStatus}, "Updated"))
 })
 
-export {postAvideo , getAllVideos , updateVideo, deleteVideo, getVideoById}
+export {postAvideo , getAllVideos , updateVideo, deleteVideo, getVideoById, togglePostStatus }
